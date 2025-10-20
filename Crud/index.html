@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simple CRUD App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f6f8fa;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      height: 100vh;
+      padding-top: 40px;
+    }
+
+    .container {
+      background: white;
+      width: 400px;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    input {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    button {
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .action-btn {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      margin: 2px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .delete-btn {
+      background-color: #dc3545;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>CRUD App</h2>
+    <form id="userForm">
+      <input type="text" id="name" placeholder="Enter name" required />
+      <input type="email" id="email" placeholder="Enter email" required />
+      <button type="submit" id="submitBtn">Add User</button>
+    </form>
+
+    <table id="userTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    let users = [];
+    let editIndex = null;
+
+    const userForm = document.getElementById('userForm');
+    const nameInput = document.getElementById('name');
+    const emailInput = document.getElementById('email');
+    const userTableBody = document.querySelector('#userTable tbody');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Function to render table rows
+    function renderTable() {
+      userTableBody.innerHTML = '';
+      users.forEach((user, index) => {
+        userTableBody.innerHTML += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${user.name}</td>
+            <td>${user.email}</td>
+            <td>
+              <button class="action-btn" onclick="editUser(${index})">Edit</button>
+              <button class="action-btn delete-btn" onclick="deleteUser(${index})">Delete</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    // Add or update user
+    userForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const name = nameInput.value.trim();
+      const email = emailInput.value.trim();
+
+      if (editIndex === null) {
+        // CREATE
+        users.push({ name, email });
+      } else {
+        // UPDATE
+        users[editIndex] = { name, email };
+        editIndex = null;
+        submitBtn.textContent = 'Add User';
+      }
+
+      nameInput.value = '';
+      emailInput.value = '';
+      renderTable();
+    });
+
+    // Edit user
+    function editUser(index) {
+      const user = users[index];
+      nameInput.value = user.name;
+      emailInput.value = user.email;
+      submitBtn.textContent = 'Update User';
+      editIndex = index;
+    }
+
+    // Delete user
+    function deleteUser(index) {
+      users.splice(index, 1);
+      renderTable();
+    }
+  </script>
+
+</body>
+</html>
+
+
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <button id="btn">facts</button>
+    <p id="fact"></p>
+    <script src="app.js"></script>
+</body>
+</html> -->
