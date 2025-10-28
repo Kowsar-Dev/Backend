@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User CRUD Dashboard</title>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: "Poppins", sans-serif;
+        background-color: #f4f6fa;
+        color: #333;
+        padding: 30px;
+    }
+
+    header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    header h1 {
+        font-size: 2.2em;
+        color: #3b82f6;
+    }
+
+    header p {
+        color: #6b7280;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+
+    .card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        padding: 25px;
+    }
+
+    .card h2 {
+        margin-bottom: 20px;
+        color: #2563eb;
+        font-size: 1.3em;
+        border-left: 5px solid #2563eb;
+        padding-left: 10px;
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    input {
+        padding: 12px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 1em;
+        transition: border-color 0.3s;
+    }
+
+    input:focus {
+        outline: none;
+        border-color: #2563eb;
+    }
+
+    button {
+        background-color: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    button:hover {
+        background-color: #1d4ed8;
+    }
+
+    .btn-secondary {
+        background-color: #10b981;
+    }
+
+    .btn-secondary:hover {
+        background-color: #059669;
+    }
+
+    .table-container {
+        margin-top: 30px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    th, td {
+        text-align: left;
+        padding: 15px;
+    }
+
+    th {
+        background-color: #2563eb;
+        color: white;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f9fafb;
+    }
+
+    .action-btns {
+        display: flex;
+        gap: 8px;
+    }
+
+    .edit {
+        background-color: #3b82f6;
+    }
+
+    .delete {
+        background-color: #ef4444;
+    }
+
+    .message {
+        margin-top: 15px;
+        padding: 10px;
+        border-radius: 8px;
+        display: none;
+    }
+
+    .success {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .error {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    @media (max-width: 900px) {
+        .grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+</head>
+<body>
+<header>
+    <h1>👤 User Management Dashboard</h1>
+    <p>Perform CRUD operations seamlessly with REST API</p>
+</header>
+
+<div class="grid">
+    <!-- Create -->
+    <div class="card">
+        <h2>Create New User</h2>
+        <div id="createMessage" class="message"></div>
+        <form id="createUserForm">
+            <input type="email" id="createEmail" placeholder="Email Address *" required>
+            <input type="text" id="createName" placeholder="Name (Optional)">
+            <button type="submit">Add User</button>
+        </form>
+    </div>
+
+    <!-- Update -->
+    <div class="card">
+        <h2>Update User</h2>
+        <div id="updateMessage" class="message"></div>
+        <form id="updateUserForm">
+            <input type="email" id="updateEmail" placeholder="User Email *" required>
+            <input type="text" id="updateName" placeholder="New Name *" required>
+            <button type="submit" class="btn-secondary">Update User</button>
+        </form>
+    </div>
+</div>
+
+<!-- Users List -->
+<div class="table-container">
+    <h2 style="margin-bottom:15px;">All Users</h2>
+    <button onclick="loadUsers()" class="btn-secondary">Refresh</button>
+    <div id="usersList"><p>Loading users...</p></div>
+</div>
+
+<script>
+const API_URL = "http://localhost:3000/api/user";
+
+function showMessage(id, msg, type) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = `message ${type}`;
+    el.style.display = "block";
+    setTimeout(() => (el.style.display = "none"), 4000);
+}
+
+// Create User
+document.getElementById("createUserForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("createEmail").value;
+    const name = document.getElementById("createName").value;
+
+    try {
+        const res = await fetch(`${API_URL}/create`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, name }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showMessage("createMessage", "User created successfully!", "success");
+            e.target.reset();
+            loadUsers();
+        } else {
+            showMessage("createMessage", data.error, "error");
+        }
+    } catch (err) {
+        showMessage("createMessage", err.message, "error");
+    }
+});
+
+// Load Users
+async function loadUsers() {
+    const list = document.getElementById("usersList");
+    list.innerHTML = "<p>Loading...</p>";
+    try {
+        const res = await fetch(`${API_URL}/getall`);
+        const users = await res.json();
+
+        if (res.ok && users.length > 0) {
+            let html = `
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>Email</th><th>Name</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+            `;
+            users.forEach(u => {
+                html += `
+                <tr>
+                    <td>${u.id}</td>
+                    <td>${u.email}</td>
+                    <td>${u.name || "N/A"}</td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="edit" onclick="editUser('${u.email}','${u.name || ''}')">Edit</button>
+                            <button class="delete" onclick="deleteUser('${u.email}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+            html += "</tbody></table>";
+            list.innerHTML = html;
+        } else {
+            list.innerHTML = "<p>No users found.</p>";
+        }
+    } catch (err) {
+        list.innerHTML = `<p>Error: ${err.message}</p>`;
+    }
+}
+
+// Edit User
+function editUser(email, name) {
+    document.getElementById("updateEmail").value = email;
+    document.getElementById("updateName").value = name;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// Update User
+document.getElementById("updateUserForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("updateEmail").value;
+    const name = document.getElementById("updateName").value;
+    try {
+        const res = await fetch(`${API_URL}/${email}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showMessage("updateMessage", "User updated!", "success");
+            e.target.reset();
+            loadUsers();
+        } else showMessage("updateMessage", data.error, "error");
+    } catch (err) {
+        showMessage("updateMessage", err.message, "error");
+    }
+});
+
+// Delete User
+async function deleteUser(email) {
+    if (!confirm(`Delete user with email: ${email}?`)) return;
+    try {
+        const res = await fetch(`${API_URL}/${email}`, { method: "DELETE" });
+        const data = await res.json();
+        if (res.ok) loadUsers();
+        alert(data.message || "User deleted!");
+    } catch (err) {
+        alert("Error: " + err.message);
+    }
+}
+
+window.addEventListener("DOMContentLoaded", loadUsers);
+</script>
+</body>
+</html>
